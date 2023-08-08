@@ -1,9 +1,11 @@
 import express from 'express'
-import { login, registerUser } from '../controllers/UserController.js'
+import { getAllUser, login, registerUser } from '../controllers/UserController.js'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs/promises';
+import Auth from '../middlewares/Auth.js';
 const UserRouter = express.Router()
+
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -32,5 +34,6 @@ const upload = multer({storage:storage})
 
 UserRouter.post("/register-user",upload.single('image'),registerUser)
 UserRouter.post("/user-login",login)
+UserRouter.get("/get-all-user", Auth , getAllUser)
 
 export default UserRouter

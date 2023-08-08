@@ -61,3 +61,14 @@ export const login = async(req,res)=>{
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({message:"error in user login",success:false, error:error.message})
     }
 }
+
+export const getAllUser = async(req,res)=>{
+    try {
+        const user = await User.find({})
+       
+        return res.status(StatusCodes.OK).json({success:true, message:"Fetch all user successfully", data:user})
+    } catch (error) {
+        console.log(error)
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({message:"Error in find user",error:error.message})
+    }
+}
