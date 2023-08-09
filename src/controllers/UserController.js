@@ -2,12 +2,21 @@ import { StatusCodes } from "http-status-codes";
 import bcryptjs from 'bcryptjs'
 import User from "../models/UserModel.js";
 
+const securePassword = async(password)=>{
+    try {
+        const hashPassword = await bcryptjs.hash(password,10)
+        return hashPassword
+    } catch (error) {
+        res.status(StatusCodes.BAD_REQUEST).json({message:error.message})
+    }
+}
 
 export async function registerUser(req,res){
     try {
         const password = req.body.password
         const hashPassword = bcryptjs.hashSync(password, 10)
         req.body['password'] = hashPassword
+
         const image = req.file.filename
 
         const {name, email,mobile, type} = req.body
@@ -70,5 +79,33 @@ export const getAllUser = async(req,res)=>{
     } catch (error) {
         console.log(error)
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({message:"Error in find user",error:error.message})
+    }
+}
+
+
+// Update password
+
+export const updatePassword = async(req,res)=>{
+    try {
+        const userId = req.params.id
+        const password = req.body.password
+        const hashPassword =await securePassword(password)
+
+        const user = await User.findOne({_id:userId})
+        if(!user){
+            return res.status(StatusCodes.NOT_FOUND).json({
+                successL:false,
+                message:`User not found with userid ${userId}`
+            })
+        }
+        const updateUserPassword = await User.findByIdAndUpdate({_id:userId},{$set:{
+            password:hashPassword
+        }})
+
+      return  res.status(StatusCodes.OK).json({success:true, message:"Your password has been updated", data:updateUserPassword})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({success:false, message:'Error in update password',error:error.message})
     }
 }

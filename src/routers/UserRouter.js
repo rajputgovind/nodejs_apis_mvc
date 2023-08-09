@@ -1,5 +1,5 @@
 import express from 'express'
-import { getAllUser, login, registerUser } from '../controllers/UserController.js'
+import { getAllUser, login, registerUser, updatePassword } from '../controllers/UserController.js'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs/promises';
@@ -35,5 +35,6 @@ const upload = multer({storage:storage})
 UserRouter.post("/register-user",upload.single('image'),registerUser)
 UserRouter.post("/user-login",login)
 UserRouter.get("/get-all-user", Auth , getAllUser)
+UserRouter.post("/update-password/:id",updatePassword)
 
 export default UserRouter
