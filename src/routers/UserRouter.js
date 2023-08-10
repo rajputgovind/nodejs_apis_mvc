@@ -1,5 +1,5 @@
 import express from 'express'
-import { getAllUser, login, registerUser, updatePassword } from '../controllers/UserController.js'
+import { forgetPassword, getAllUser, login, registerUser, resetPassword, updatePassword } from '../controllers/UserController.js'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs/promises';
@@ -36,5 +36,7 @@ UserRouter.post("/register-user",upload.single('image'),registerUser)
 UserRouter.post("/user-login",login)
 UserRouter.get("/get-all-user", Auth , getAllUser)
 UserRouter.post("/update-password/:id",updatePassword)
+UserRouter.post('/forget-password',forgetPassword)
+UserRouter.get('/reset-password', resetPassword)
 
 export default UserRouter

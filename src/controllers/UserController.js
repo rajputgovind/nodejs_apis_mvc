@@ -1,6 +1,45 @@
 import { StatusCodes } from "http-status-codes";
 import bcryptjs from 'bcryptjs'
 import User from "../models/UserModel.js";
+import nodemailer from 'nodemailer'
+import randomstring from 'randomstring'
+
+// Mail send code
+
+const sendResetPassword = async(name,email,token)=>{
+    try {
+        const transporter =  nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port:5000,
+            secure:false,
+            requireTLS:true,
+            auth:{
+                user:process.env.EMAIL_USER,
+                pass:process.env.EMAIL_PASSWORD
+            }
+        })
+
+        const mailOptions = {
+            from:process.env.EMAIL_USER,
+            to:email,
+            subject:"For Reset Password",
+            html: '<p>Hii'+name+', Please copy the link and <a href="http://localhost:5000/api/user/reset-password?token='+token+'">  reset your password </a></p>'
+
+        }
+
+        transporter.sendMail(mailOptions,function(error,info){
+            if(error){
+                console.log(error)
+            }
+            else{
+                console.log("Mail has been sent",info.response)
+            }
+        })
+
+    } catch (error) {
+        return res.status(StatusCodes.BAD_REQUEST).json({success:false, message:error.message})
+    }
+}
 
 const securePassword = async(password)=>{
     try {
@@ -107,5 +146,48 @@ export const updatePassword = async(req,res)=>{
     } catch (error) {
         console.log(error)
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({success:false, message:'Error in update password',error:error.message})
+    }
+}
+
+
+// forget password api
+
+export const forgetPassword = async(req,res)=>{
+    try {
+        const email = req.body.email
+        const user = await User.findOne({email:email})
+        if(!user){
+            return res.status(StatusCodes.NO_CONTENT).json({success:false, message:"User not found"})
+        }
+        
+        const randomestring = randomstring.generate() 
+        const data= await User.updateOne({email:email},{$set:{token:randomestring}})   
+        sendResetPassword(user.name,user.email,randomstring)
+
+        res.status(StatusCodes.OK).json({success:true, message:"please check your email and reset password"})
+    } catch (error) { 
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({success:false,message:"Error while forget password"})
+    }
+}
+
+
+// Reset Password
+
+export const resetPassword = async(req,res) =>{
+    try {
+        const token = req.query.token
+        const tokenData= await User.findOne({token:token})
+        if(!tokenData){
+            return res.status(StatusCodes.BAD_REQUEST).json({success:false,message:"Not found"})
+        }
+        const {password} = req.body
+        const hashPassword = bcryptjs.hashSync(password,10)
+        const updateUser = await User.findByIdAndUpdate({_id:tokenData._id},{$set:{
+            password:hashPassword, token:''
+        }},{new:true})
+
+        return res.status(StatusCodes.OK).json({success:true, message:"Password reset successfully", data:updateUser})
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({success:false,message:"Error while reset password"})
     }
 }
